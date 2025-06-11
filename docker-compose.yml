@@ -12,6 +12,9 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/r_redis
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
     networks:
       - r-redis-network
   redis:
@@ -19,6 +22,20 @@ services:
     container_name: r-redis
     ports:
       - "6379:6379"
+    networks:
+      - r-redis-network
+
+  postgres:
+    image: postgres:latest
+    container_name: r-redis-postgres
+    environment:
+      POSTGRES_DB: r_redis
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
     networks:
       - r-redis-network
 
@@ -37,6 +54,7 @@ services:
 
 volumes:
   redis-insight:
+  pgdata:
 
 networks:
   r-redis-network:
