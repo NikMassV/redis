@@ -1,13 +1,10 @@
 package edu.mikita.api.service;
 
 import edu.mikita.api.dto.UserDto;
-import edu.mikita.api.mapper.UserMapper;
-import edu.mikita.api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -17,36 +14,40 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserService {
 
-    private final UserRepository userRepository;
-    private final UserMapper userMapper;
+    private final CacheManager cacheManager;
+    private final UserWriteBehindQueueService writeBehindQueueService;
 
-    @CachePut(cacheNames = "users", key = "#result.id")
+    private static final String USERS_CACHE = "users";
+
     public UserDto create(UserDto dto) {
-        log.info("Saving User to Postgres and Redis");
+        log.info("Write-Behind: saving User to cache and scheduling DB save");
         UserDto withIdDto = new UserDto(UUID.randomUUID().toString(), dto.name(), dto.age(), dto.events());
-        var saved = userRepository.save(userMapper.toJpaEntity(withIdDto));
-        return userMapper.toDto(saved);
+        putToCache(withIdDto);
+        writeBehindQueueService.scheduleWrite(withIdDto); //delayed recording
+        return withIdDto;
     }
 
-    @Cacheable(cacheNames = "users", key = "#id", unless = "#result == null")
     public UserDto get(String id) {
-        log.info("Cache miss — loading User id={} from Postgres", id);
-        return userRepository.findById(id)
-                .map(userMapper::toDto)
-                .orElse(null);
+        Cache cache = cacheManager.getCache(USERS_CACHE);
+        return cache.get(id, UserDto.class);
     }
 
-    @CachePut(cacheNames = "users", key = "#id")
     public UserDto update(String id, UserDto dto) {
-        log.info("Updating User id={} in Postgres and refreshing cache", id);
-        dto = new UserDto(id, dto.name(), dto.age(), dto.events());
-        var updated = userRepository.save(userMapper.toJpaEntity(dto));
-        return userMapper.toDto(updated);
+        var updated = new UserDto(id, dto.name(), dto.age(), dto.events());
+        log.info("Write-Behind: updating User in cache and scheduling DB save");
+        putToCache(updated);
+        writeBehindQueueService.scheduleWrite(updated);
+        return updated;
     }
 
-    @CacheEvict(cacheNames = "users", key = "#id")
     public void delete(String id) {
-        log.info("Deleting User id={} from Postgres and evicting cache", id);
-        userRepository.deleteById(id);
+        log.info("Evicting User from cache and DB");
+        Cache cache = cacheManager.getCache(USERS_CACHE);
+        cache.evict(id);
+    }
+
+    private void putToCache(UserDto dto) {
+        Cache cache = cacheManager.getCache(USERS_CACHE);
+        cache.put(dto.id(), dto);
     }
 }
