@@ -5,6 +5,8 @@ import edu.mikita.api.service.EventService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/events")
 @RequiredArgsConstructor
@@ -30,5 +32,10 @@ public class EventRestControllerV1 {
     @DeleteMapping("/{id}")
     public void delete(@PathVariable String id) {
         eventService.delete(id);
+    }
+
+    @GetMapping
+    public List<EventDto> getAll() {
+        return eventService.getAll();
     }
 }
