@@ -52,6 +52,21 @@ services:
     networks:
       - r-redis-network
 
+  ui:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+    container_name: r-redis-ui
+    ports:
+      - "3000:3000"
+    environment:
+      - API_BASE=http://r-redis-api:8087/api/v1
+      - REDIS_URL=redis://r-redis:6379
+    depends_on:
+      - api
+    networks:
+      - r-redis-network
+
 volumes:
   redis-insight:
   pgdata:

@@ -5,6 +5,8 @@ import edu.mikita.api.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
@@ -29,5 +31,10 @@ public class UserRestControllerV1 {
     @DeleteMapping("/{id}")
     public void delete(@PathVariable String id) {
         userService.delete(id);
+    }
+
+    @GetMapping
+    public List<UserDto> getAll() {
+        return userService.getAll();
     }
 }
