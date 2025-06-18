@@ -1,7 +1,49 @@
-<h2>Users</h2>
-<a href="/users/new">Create new user</a>
-<ul>
-  <% users.forEach(user => { %>
-    <li><%= user.name %> (age: <%= user.age %>, events: <%= user.events?.length || 0 %>)</li>
-  <% }) %>
-</ul>
+<h2><%= title %></h2>
+
+<a href="/users/new">
+    <button>Create User</button>
+</a>
+
+<table>
+    <thead>
+    <tr>
+        <th>Name</th>
+        <th>Age</th>
+        <th>Events</th>
+        <th>Visits</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <% users.forEach(user => { %>
+        <tr>
+            <td><%= user.name %></td>
+            <td><%= user.age %></td>
+            <td><%= user.events.length %></td>
+            <td><%= visits[user.id] ?? 0 %></td>
+            <td>
+                <form action="/users/<%= user.id %>/visit" method="POST" style="display:inline">
+                    <button type="submit">Visit</button>
+                </form>
+
+                <form action="/users/<%= user.id %>/visit-massive" method="POST" style="display:inline">
+                    <button type="submit">Visit 1000 Unsafe</button>
+                </form>
+
+                <form action="/users/<%= user.id %>/visit-incr" method="POST" style="display:inline">
+                    <button type="submit">Visit 1000 INCR</button>
+                </form>
+
+                <form action="/users/<%= user.id %>/visit-watch" method="POST" style="display:inline">
+                    <button type="submit">Visit 1000 WATCH</button>
+                </form>
+
+                <form action="/users/<%= user.id %>/visit-lock" method="POST" style="display:inline">
+                    <button type="submit">Visit 1000 LOCK</button>
+                </form>
+
+            </td>
+        </tr>
+    <% }) %>
+    </tbody>
+</table>
