@@ -48,21 +48,30 @@ function cacheMiddleware(pageKey) {
 }
 
 app.get('/', cacheMiddleware('page:index'), (req, res) => {
-    res.render('index', { title: 'Главная' });
+    res.render('index', { title: 'Main' });
 });
 
 app.get('/users', cacheMiddleware('page:users'), async (req, res) => {
     try {
         const users = await axios.get(`${API_BASE}/users`).then(r => r.data);
-        res.render('users', { title: 'Пользователи', users });
+
+        const visits = {};
+        for (const user of users) {
+            const key = `user:visits:${user.id}`;
+            const count = await client.get(key);
+            visits[user.id] = Number.isFinite(parseInt(count)) ? parseInt(count) : 0;
+        }
+
+        res.render('users', { title: 'Users', users, visits });
     } catch (err) {
         console.error('Error loading users:', err.message);
-        res.render('users', { title: 'Пользователи', users: [] });
+        res.render('users', { title: 'Users', users: [], visits: {} });
     }
 });
 
+
 app.get('/users/new', (req, res) => {
-    res.render('user_new', { title: 'Создать пользователя' });
+    res.render('user_new', { title: 'Create User' });
 });
 
 app.post('/users', async (req, res) => {
@@ -79,15 +88,15 @@ app.post('/users', async (req, res) => {
 app.get('/events', cacheMiddleware('page:events'), async (req, res) => {
     try {
         const events = await axios.get(`${API_BASE}/events`).then(r => r.data);
-        res.render('events', { title: 'События', events });
+        res.render('events', { title: 'Events', events });
     } catch (err) {
         console.error('Error loading events:', err.message);
-        res.render('events', { title: 'События', events: [] });
+        res.render('events', { title: 'Events', events: [] });
     }
 });
 
 app.get('/events/new', (req, res) => {
-    res.render('event_new', { title: 'Создать событие' });
+    res.render('event_new', { title: 'Create event' });
 });
 
 app.post('/events', async (req, res) => {
@@ -99,6 +108,92 @@ app.post('/events', async (req, res) => {
         console.error('Error creating event:', err.message);
     }
     res.redirect('/events');
+});
+
+app.post('/users/:id/visit', async (req, res) => {
+    const userId = req.params.id;
+    try {
+        await axios.post(`${API_BASE}/users/${userId}/visit`);
+        await client.del('page:users'); // Invalidate full page cache
+    } catch (err) {
+        console.error(`Error visiting user ${userId}:`, err.message);
+    }
+    res.redirect('/users');
+});
+
+app.post('/users/:id/visit-massive', async (req, res) => {
+    const userId = req.params.id;
+    const visitRequests = [];
+
+    for (let i = 0; i < 1000; i++) {
+        visitRequests.push(
+            axios.post(`${API_BASE}/users/${userId}/visit`).catch(err =>
+                console.error(`Failed visit #${i + 1}:`, err.message)
+            )
+        );
+    }
+
+    await Promise.all(visitRequests);
+    await client.del('page:users'); // clear cash
+
+    res.redirect('/users');
+});
+
+app.post('/users/:id/visit-incr', async (req, res) => {
+    const userId = req.params.id;
+    const visitRequests = [];
+
+    for (let i = 0; i < 1000; i++) {
+        visitRequests.push(
+            axios.post(`${API_BASE}/users/${userId}/visit-incr`).catch(err =>
+                console.error(`Failed visit-watch #${i + 1}:`, err.message)
+            )
+        );
+    }
+
+    await Promise.all(visitRequests);
+    await client.del('page:users');
+
+    res.redirect('/users');
+
+});
+
+app.post('/users/:id/visit-watch', async (req, res) => {
+    const userId = req.params.id;
+    const visitRequests = [];
+
+    for (let i = 0; i < 1000; i++) {
+        visitRequests.push(
+            axios.post(`${API_BASE}/users/${userId}/visit-watch`).catch(err =>
+                console.error(`Failed visit-watch #${i + 1}:`, err.message)
+            )
+        );
+    }
+
+    await Promise.all(visitRequests);
+    await client.del('page:users');
+
+    res.redirect('/users');
+
+});
+
+app.post('/users/:id/visit-lock', async (req, res) => {
+    const userId = req.params.id;
+    const visitRequests = [];
+
+    for (let i = 0; i < 1000; i++) {
+        visitRequests.push(
+            axios.post(`${API_BASE}/users/${userId}/visit-lock`).catch(err =>
+                console.error(`Failed visit-lock #${i + 1}:`, err.message)
+            )
+        );
+    }
+
+    await Promise.all(visitRequests);
+    await client.del('page:users');
+
+    res.redirect('/users');
+
 });
 
 (async () => {

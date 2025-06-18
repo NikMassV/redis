@@ -3,6 +3,7 @@ package edu.mikita.api.rest;
 import edu.mikita.api.dto.UserDto;
 import edu.mikita.api.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -36,5 +37,29 @@ public class UserRestControllerV1 {
     @GetMapping
     public List<UserDto> getAll() {
         return userService.getAll();
+    }
+
+    @PostMapping("/{id}/visit")
+    public ResponseEntity<Void> incrementVisit(@PathVariable String id) {
+        userService.incrementVisitUnsafe(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/visit-incr")
+    public ResponseEntity<Void> incrementIncrVisit(@PathVariable String id) {
+        userService.incrementVisitWithIncr(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/visit-watch")
+    public ResponseEntity<Void> incrementVisitWatch(@PathVariable String id) {
+        userService.incrementWithWatch(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/visit-lock")
+    public ResponseEntity<Void> incrementVisitLock(@PathVariable String id) {
+        userService.incrementWithLock(id);
+        return ResponseEntity.ok().build();
     }
 }
