@@ -12,6 +12,7 @@ import java.util.List;
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
 public class UserRestControllerV1 {
+
     private final UserService userService;
 
     @PostMapping
@@ -61,5 +62,18 @@ public class UserRestControllerV1 {
     public ResponseEntity<Void> incrementVisitLock(@PathVariable String id) {
         userService.incrementWithLock(id);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/save-json")
+    public ResponseEntity<Void> saveJson(@PathVariable String id) {
+        var user = userService.get(id);
+        userService.saveUserToRedisJson(user);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{id}/json")
+    public ResponseEntity<UserDto> getUserFromJson(@PathVariable String id) {
+        UserDto user = userService.getUserFromRedisJson(id);
+        return user != null ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
     }
 }

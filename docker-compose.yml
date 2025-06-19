@@ -18,7 +18,7 @@ services:
     networks:
       - r-redis-network
   redis:
-    image: redis:latest
+    image: redis/redis-stack-server:latest
     container_name: r-redis
     ports:
       - "6379:6379"

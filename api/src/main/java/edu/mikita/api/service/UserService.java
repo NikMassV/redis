@@ -1,5 +1,6 @@
 package edu.mikita.api.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.mikita.api.dto.UserDto;
 import edu.mikita.api.mapper.UserMapper;
 import edu.mikita.api.repository.UserRepository;
@@ -8,6 +9,7 @@ import io.lettuce.core.TransactionResult;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -135,5 +137,22 @@ public class UserService {
                 .stream()
                 .map(userMapper::toDto)
                 .toList();
+    }
+
+    @SneakyThrows
+    public void saveUserToRedisJson(UserDto user) {
+        String key = "user:json:" + user.id();
+        redisTemplate.getConnectionFactory().getConnection()
+                .execute("JSON.SET", key.getBytes(), "$".getBytes(),
+                        new ObjectMapper().writeValueAsBytes(user));
+    }
+
+    @SneakyThrows
+    public UserDto getUserFromRedisJson(String id) {
+        String key = "user:json:" + id;
+        byte[] raw = (byte[]) redisTemplate.getConnectionFactory()
+                .getConnection()
+                .execute("JSON.GET", key.getBytes());
+        return new ObjectMapper().readValue(raw, UserDto.class);
     }
 }
