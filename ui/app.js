@@ -196,6 +196,23 @@ app.post('/users/:id/visit-lock', async (req, res) => {
 
 });
 
+app.get('/users/:id/json', async (req, res) => {
+    const userId = req.params.id;
+    try {
+        const response = await axios.get(`${API_BASE}/users/${userId}/json`);
+        res.render('user-json', { title: 'User from RedisJSON', user: response.data });
+    } catch (e) {
+        console.error(e.message);
+        res.status(404).send('User not found in RedisJSON');
+    }
+});
+
+app.post('/users/:id/save-json', async (req, res) => {
+    const userId = req.params.id;
+    await axios.post(`${API_BASE}/users/${userId}/save-json`);
+    res.redirect('/users');
+});
+
 (async () => {
     try {
         await client.connect();

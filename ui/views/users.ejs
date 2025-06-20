@@ -42,6 +42,13 @@
                     <button type="submit">Visit 1000 LOCK</button>
                 </form>
 
+                <form action="/users/<%= user.id %>/json" method="GET" style="display:inline">
+                    <button type="submit">Check JSON</button>
+                </form>
+
+                <form action="/users/<%= user.id %>/save-json" method="POST" style="display:inline">
+                    <button type="submit">Save to JSON</button>
+                </form>
             </td>
         </tr>
     <% }) %>
